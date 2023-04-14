@@ -1,22 +1,22 @@
 export default {
-  POSTGRESQL_TYPE: 'postgres',
-  POSTGRESQL_HOST: 'localhost',
+  POSTGRESQL_TYPE: '',
+  POSTGRESQL_HOST: '',
   POSTGRESQL_PORT: 5432,
-  POSTGRESQL_DATABASE_NAME: 'postgres',
-  POSTGRESQL_USERNAME: 'postgres',
-  POSTGRESQL_PASSWORD: 'phuong',
+  POSTGRESQL_DATABASE_NAME: '',
+  POSTGRESQL_USERNAME: '',
+  POSTGRESQL_PASSWORD: '',
 
   LOGGING: ['query', 'error', 'info', 'warn'],
   LOGGER: 'file',
 
-  ACCESS_SECRET_KEY: 'coinmap-interview@2023',
-  REFRESH_SECRET_KEY: '@coinmap-interview123',
-  ACCESS_TOKEN_EXPIRESIN: '1d',
-  REFRESH_TOKEN_EXPIRESIN: '30d',
-  VERIFY_TOKEN_EXPIRESIN: '1000s',
+  ACCESS_SECRET_KEY: '',
+  REFRESH_SECRET_KEY: '',
+  ACCESS_TOKEN_EXPIRESIN: '',
+  REFRESH_TOKEN_EXPIRESIN: '',
+  VERIFY_TOKEN_EXPIRESIN: '',
 
-  SALT: 10,
+  SALT: '',
 
-  EMAIL_PASSWORD: 'shojvcrnkjtchbcy',
-  EMAIL_USERNAME: 'phuonglk@kidohu.com',
+  EMAIL_PASSWORD: '',
+  EMAIL_USERNAME: '',
 };

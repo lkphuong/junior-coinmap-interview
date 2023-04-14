@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
@@ -30,7 +30,6 @@ import { ErrorMessage } from '../constants/enums/errors.enum';
 import {
   AUTHENTICATION_EXIT_CODE,
   SERVER_EXIT_CODE,
-  UNKNOW_EXIT_CODE,
 } from '@constants/enums/error-code.enum';
 
 import { Levels } from '@constants/enums/level.enum';
@@ -55,12 +54,7 @@ export const createAccount = async (
   try {
     if (valid) {
       //#region send email
-      await sendVerificationEmail(
-        email,
-        configuration_service,
-        jwt_service,
-        req,
-      );
+      await sendVerificationEmail(email, configuration_service, jwt_service);
       //#endregion
 
       //#region response
@@ -80,12 +74,7 @@ export const createAccount = async (
 
       if (user) {
         //#region send email
-        await sendVerificationEmail(
-          email,
-          configuration_service,
-          jwt_service,
-          req,
-        );
+        await sendVerificationEmail(email, configuration_service, jwt_service);
         //#endregion
 
         //#region response
@@ -116,8 +105,7 @@ export const sendVerificationEmail = async (
   email: string,
   configuration_service: ConfigurationService,
   jwt_service: JwtService,
-  req: Request,
-): Promise<void> => {
+) => {
   const token = jwt_service.sign(
     { email },
     {
@@ -139,27 +127,11 @@ export const sendVerificationEmail = async (
       pass: configuration_service.get(Configuration.EMAIL_PASSWORD),
     },
   });
-
-  transporter.sendMail(
-    {
-      to: email,
-      subject: 'Xác thực email',
-      html: `Nhấn vào đường dẫn sau để xác thực email của bạn: <a href="${url}">${url}</a>`,
-    },
-    (error, result) => {
-      if (error) {
-        //#region throw HandlerException
-        return new HandlerException(
-          UNKNOW_EXIT_CODE.UNKNOW_ERROR,
-          req.method,
-          req.url,
-          ErrorMessage.OPERATOR_SEND_EMAIL_ERROR,
-          HttpStatus.EXPECTATION_FAILED,
-        );
-        //#endregion
-      }
-    },
-  );
+  await transporter.sendMail({
+    to: email,
+    subject: 'Xác thực email',
+    html: `Nhấn vào đường dẫn sau để xác thực email của bạn: <a href="${url}">${url}</a>`,
+  });
 };
 
 export const verifyEmail = (
