@@ -14,6 +14,4 @@ export interface AuthResponse {
 
 export interface VerifyTokenResponse {
   email: string;
-
-  type: number;
 }

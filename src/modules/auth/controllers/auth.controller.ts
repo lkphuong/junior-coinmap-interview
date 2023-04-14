@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
+  Param,
   Post,
   Req,
   UseGuards,
@@ -19,12 +20,13 @@ import { returnObjects } from '@utils/index';
 
 import {
   generateAccessToken,
+  generateFailedResponse,
   generateRefreshToken,
   generateResponse,
   validatePassword,
 } from '../utils';
 
-import { createAccount } from '../funcs';
+import { createAccount, verifyEmail } from '../funcs';
 
 import { LoginParamsDto } from '../dtos/login_params.dto';
 import { RegisterDto } from '../dtos/register.dto';
@@ -35,7 +37,10 @@ import { JwtPayload } from '../interfaces/payloads/jwt_payload.interface';
 import { HttpResponse } from '@interfaces/http-response.interface';
 import { HttpNoneResponse } from '@interfaces/http-none-response.interface';
 import { LoginResponse } from '../interfaces/login_response.interface';
-import { ProfileResponse } from '../interfaces/auth_response.interface';
+import {
+  ProfileResponse,
+  VerifyTokenResponse,
+} from '../interfaces/auth_response.interface';
 import { RegisterResponse } from '../interfaces/register_response.interface';
 
 import { AuthService } from '../services/auth.service';
@@ -78,7 +83,7 @@ export class AuthController {
   /**
    * @method POST
    * @url /api/auth/login
-   * @param username
+   * @param email
    * @param password
    * @return HttpResponse<LoginResponse> | HttpException
    * @description Validate the account
@@ -108,51 +113,63 @@ export class AuthController {
 
       const user = await this._authService.getUserByEmail(email);
       if (user) {
-        const is_match = await validatePassword(password, user.password);
-        if (is_match) {
-          //#region Generate access_token
-          const access_token = generateAccessToken(
-            this._jwtService,
-            this._configurationService,
-            user.id,
-            user.email,
-          );
-          //#endregion
-
-          //#region Generate refresh_token
-          const refresh_token = generateRefreshToken(
-            this._jwtService,
-            this._configurationService,
-            user.email,
-          );
-          //#endregion
-
-          //#region Generate session
-          let session = await this._authService.contains(email);
-
-          if (!session) {
-            session = await this._authService.add(
+        if (user.active) {
+          const is_match = await validatePassword(password, user.password);
+          if (is_match) {
+            //#region Generate access_token
+            const access_token = generateAccessToken(
+              this._jwtService,
+              this._configurationService,
               user.id,
               user.email,
-              access_token,
-              refresh_token,
-              new Date(),
-              true,
             );
-          } else {
-            session = await this._authService.renew(
-              access_token,
-              refresh_token,
-              session,
-            );
-          }
+            //#endregion
 
-          //#region Generate response
-          return await generateResponse(
-            session,
-            access_token,
-            refresh_token,
-            req,
+            //#region Generate refresh_token
+            const refresh_token = generateRefreshToken(
+              this._jwtService,
+              this._configurationService,
+              user.email,
+            );
+            //#endregion
+
+            //#region Generate session
+            let session = await this._authService.contains(email);
+
+            if (!session) {
+              session = await this._authService.add(
+                user.id,
+                user.email,
+                access_token,
+                refresh_token,
+                new Date(),
+                true,
+              );
+            } else {
+              session = await this._authService.renew(
+                access_token,
+                refresh_token,
+                session,
+              );
+            }
+
+            //#region Generate response
+            return await generateResponse(
+              session,
+              access_token,
+              refresh_token,
+              req,
+            );
+            //#endregion
+          }
+        } else {
+          //#region throw HandlerException
+          throw new HandlerException(
+            DATABASE_EXIT_CODE.UNAUTHORIZE,
+            req.method,
+            req.url,
+            ErrorMessage.ACTIVE_USER_ERROR,
+            HttpStatus.BAD_REQUEST,
           );
           //#endregion
         }
@@ -417,7 +434,7 @@ export class AuthController {
    * @method POST
    * @url /api/auth/register
    * @access public
-   * @param username
+   * @param email
    * @param password
    * @param permissions[]
    * @return
@@ -446,6 +463,7 @@ export class AuthController {
         this._authService,
         this._configurationService,
         this._userService,
+        this._jwtService,
         req,
       );
 
@@ -456,6 +474,69 @@ export class AuthController {
       console.log(req.method + ' - ' + req.url + ': ' + err.message);
 
       if (err instanceof HttpException) throw err;
+      else {
+        throw new HandlerException(
+          SERVER_EXIT_CODE.INTERNAL_SERVER_ERROR,
+          req.method,
+          req.url,
+        );
+      }
+    }
+  }
+
+  @Get('verify/:token')
+  async verifyEmail(
+    @Param('token') token: string,
+    @Req() req: Request,
+  ): Promise<HttpResponse<VerifyTokenResponse> | HttpException> {
+    console.log('----------------------------------------------------------');
+    console.log(req.method + ' - ' + req.url + ': ' + JSON.stringify(token));
+
+    this._logger.writeLog(
+      Levels.LOG,
+      req.method,
+      req.url,
+      JSON.stringify(token),
+    );
+
+    try {
+      const result = await verifyEmail(
+        token,
+        this._configurationService,
+        this._logger,
+        req,
+      );
+
+      if (result instanceof HttpException) throw result;
+      else {
+        console.log('email: ', result);
+        const { email } = result;
+
+        //#region Get user by email
+        const user = await this._authService.getUserByEmail(email);
+        //#endregion
+        if (user) {
+          //#region active user
+          const active = await this._userService.active(user);
+          //#endregion
+          if (active) return returnObjects({ email });
+          throw generateFailedResponse(req, ErrorMessage.OPERATOR_USER_ERROR);
+        }
+        //#region throw HandlerException
+        throw new HandlerException(
+          DATABASE_EXIT_CODE.UNKNOW_VALUE,
+          req.method,
+          req.url,
+          ErrorMessage.ACCOUNT_NOT_FOUND_ERROR,
+          HttpStatus.NOT_FOUND,
+        );
+        //#endregion
+      }
+    } catch (error) {
+      console.log('----------------------------------------------------------');
+      console.log(req.method + ' - ' + req.url + ': ' + error.message);
+
+      if (error instanceof HttpException) throw error;
       else {
         throw new HandlerException(
           SERVER_EXIT_CODE.INTERNAL_SERVER_ERROR,

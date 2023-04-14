@@ -26,12 +26,12 @@ export const generateAccessToken = (
   jwtService: JwtService,
   configurationService: ConfigurationService,
   user_id: string,
-  username: string,
+  email: string,
 ): string => {
   //#region generate access_token
   const payload: JwtPayload = {
     user_id: user_id,
-    username: username,
+    email: email,
   };
 
   const access_token = jwtService.sign(payload, {
@@ -46,12 +46,12 @@ export const generateAccessToken = (
 export const generateRefreshToken = (
   jwtService: JwtService,
   configurationService: ConfigurationService,
-  std_code: string,
+  email: string,
 ) => {
   //#region generate refresh_token
   const refresh_token = jwtService.sign(
     {
-      username: std_code,
+      email: email,
     },
     {
       secret: configurationService.get(Configuration.REFRESH_SECRET_KEY),

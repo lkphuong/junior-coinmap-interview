@@ -13,6 +13,7 @@ export const applyMiddlewares = (consumer: MiddlewareConsumer) => {
       { path: '/auth/login', method: RequestMethod.POST },
       { path: '/auth/renew-token', method: RequestMethod.POST },
       { path: '/auth/register', method: RequestMethod.POST },
+      { path: '/auth/verify/:token', method: RequestMethod.GET },
     )
     .forRoutes({ path: '*', method: RequestMethod.ALL });
 };

@@ -55,7 +55,7 @@ export class VerifyTokenMiddleware implements NestMiddleware {
 
             req.user = decoded as JwtPayload;
 
-            const auth = await this._authService.contains(decoded.username);
+            const auth = await this._authService.contains(decoded.email);
 
             if (!auth.access_token) {
               throw new ExpiredTokenException(

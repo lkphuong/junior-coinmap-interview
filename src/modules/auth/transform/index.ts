@@ -5,7 +5,7 @@ export const generate2Object = async (user: UserEntity) => {
   if (user) {
     const payload: RegisterResponse = {
       id: user.id,
-      username: user.email,
+      email: user.email,
       active: user.active,
     };
 

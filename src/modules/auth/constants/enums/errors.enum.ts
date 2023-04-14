@@ -8,6 +8,11 @@ export enum ErrorMessage {
 
   OPERATOR_PASSWORD_ERROR = 'Cập nhật mật khẩu thất bại.',
 
-  EMAIL_DUPLICATE_ERROR = 'Eail đã tồn tại (email: %s).',
+  OPERATOR_SEND_EMAIL_ERROR = 'Gửi email thất bại.',
+  EMAIL_TOKEN_EXPIRED_ERROR = 'Đã quá thời hạn xác thực! Vui lòng thực hiện lại thao tác.',
+
+  EMAIL_DUPLICATE_ERROR = 'Email đã tồn tại (email: %s).',
   OPERATOR_USER_ERROR = 'Lưu thông tin người dùng thất bại.',
+
+  ACTIVE_USER_ERROR = 'Tài khoản chưa được xác thực.',
 }
