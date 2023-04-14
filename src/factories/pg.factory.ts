@@ -14,5 +14,5 @@ export const pgFactory = (configurationService: ConfigurationService) => ({
   logging: configurationService.get(Configuration.LOGGING) as any,
   logger: configurationService.get(Configuration.LOGGER) as any,
   maxQueryExecutionTime: 3000,
-  synchronize: true,
+  synchronize: false,
 });
